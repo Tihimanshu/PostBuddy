@@ -4,7 +4,6 @@ import datetime
 import json
 
 # Custom GPT Link (replace with your actual link)
-CUSTOM_GPT_LINK = "https://chatgpt.com/g/g-TsgWYXEAy-social-post-maestro"
 
 # Billing plans
 def billing_plans():
@@ -55,7 +54,6 @@ def main():
     # Generate Button
     if st.button("Generate Post"):
         # Generate response using GPT
-        openai.api_key = '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'  # Replace with your OpenAI API key
         prompt = f"Write a {format} post about {topic} with a {tone} tone"
         response = openai.Completion.create(
             engine="davinci",
