@@ -1,56 +1,89 @@
 import streamlit as st
-from openai import OpenAI
+import openai
+import datetime
+import json
 
-# Show title and description.
-st.title("💬 Chatbot")
-st.write(
-    "This is a simple chatbot that uses OpenAI's GPT-3.5 model to generate responses. "
-    "To use this app, you need to provide an OpenAI API key, which you can get [here](https://platform.openai.com/account/api-keys). "
-    "You can also learn how to build this app step by step by [following our tutorial](https://docs.streamlit.io/develop/tutorials/llms/build-conversational-apps)."
-)
+# Custom GPT Link (replace with your actual link)
+CUSTOM_GPT_LINK = "https://chatgpt.com/g/g-TsgWYXEAy-social-post-maestro"
 
-# Ask user for their OpenAI API key via `st.text_input`.
-# Alternatively, you can store the API key in `./.streamlit/secrets.toml` and access it
-# via `st.secrets`, see https://docs.streamlit.io/develop/concepts/connections/secrets-management
-openai_api_key = st.text_input("OpenAI API Key", type="password")
-if not openai_api_key:
-    st.info("Please add your OpenAI API key to continue.", icon="🗝️")
-else:
+# Billing plans
+def billing_plans():
+    st.sidebar.title("Billing Plan")
+    plan = st.sidebar.radio("Select a Plan", ["Free", "$10/month", "$20/month", "$50/month"])
+    if plan == "Free":
+        st.sidebar.write("2 posts per month")
+        return 2
+    elif plan == "$10/month":
+        st.sidebar.write("15 posts per month")
+        return 15
+    elif plan == "$20/month":
+        st.sidebar.write("40 posts per month")
+        return 40
+    elif plan == "$50/month":
+        st.sidebar.write("100 posts per month")
+        return 100
 
-    # Create an OpenAI client.
-    client = OpenAI(api_key=openai_api_key)
+# History manager
+def save_to_history(history, text):
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if len(history) >= 10:
+        history.pop(0)  # Keep only last 10 posts
+    history.append({"timestamp": timestamp, "text": text})
+    return history
 
-    # Create a session state variable to store the chat messages. This ensures that the
-    # messages persist across reruns.
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+def main():
+    st.title("LinkedIn Social Post Maestro")
+    st.write("Use the custom GPT tool to generate LinkedIn posts for various topics")
 
-    # Display the existing chat messages via `st.chat_message`.
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    # Sidebar for history and billing management
+    with open('history.json', 'r') as f:
+        history = json.load(f)
 
-    # Create a chat input field to allow the user to enter a message. This will display
-    # automatically at the bottom of the page.
-    if prompt := st.chat_input("What is up?"):
+    st.sidebar.title("Post History")
+    for item in reversed(history):
+        st.sidebar.write(f"{item['timestamp']}: {item['text'][:20]}...")
 
-        # Store and display the current prompt.
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+    post_limit = billing_plans()
 
-        # Generate a response using the OpenAI API.
-        stream = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ],
-            stream=True,
+    # User Input Section
+    topic = st.selectbox("Choose a topic", ["Marketing", "Product", "Sales", "Customer Success", "Founder", "Team Building", "Corporate", "Mental Health", "Investment", "Custom"])
+    if topic == "Custom":
+        topic = st.text_input("Enter a custom topic:")
+    tone = st.selectbox("Choose a tone", ["Professional", "Casual", "Motivational", "Humorous"])
+    format = st.selectbox("Choose a format", ["Short LinkedIn Post", "Detailed LinkedIn Post", "Question & Engagement Post", "Storytelling"])
+
+    # Generate Button
+    if st.button("Generate Post"):
+        # Generate response using GPT
+        openai.api_key = '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'  # Replace with your OpenAI API key
+        prompt = f"Write a {format} post about {topic} with a {tone} tone"
+        response = openai.Completion.create(
+            engine="davinci",
+            prompt=prompt,
+            max_tokens=150
         )
+        generated_text = response.choices[0].text.strip()
 
-        # Stream the response to the chat using `st.write_stream`, then store it in 
-        # session state.
-        with st.chat_message("assistant"):
-            response = st.write_stream(stream)
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        st.subheader("Generated Post")
+        st.write(generated_text)
+
+        # Copy button
+        st.button("Copy to Clipboard", on_click=lambda: st.experimental_set_query_params(post=generated_text))
+
+        # Save to history
+        with open('history.json', 'w') as f:
+            json.dump(save_to_history(history, generated_text), f)
+
+    st.sidebar.title("Manage History")
+    if st.sidebar.button("Clear History"):
+        with open('history.json', 'w') as f:
+            json.dump([], f)
+        st.sidebar.success("History cleared.")
+
+if __name__ == '__main__':
+    try:
+        with open('history.json', 'x') as f:
+            json.dump([], f)
+    except FileExistsError:
+        pass
+    main()
