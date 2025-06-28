@@ -1,19 +1,19 @@
-# 💬 Chatbot template
+# AI Trends Blog
 
-A simple Streamlit app that shows how to build a chatbot using OpenAI's GPT-3.5.
+This repository contains a minimal futuristic blog showcasing trending news about artificial intelligence. Simply open `index.html` in a web browser to explore the latest posts.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://chatbot-template.streamlit.app/)
+A Streamlit chatbot example is also provided.
 
-### How to run it on your own machine
+## How to run the chatbot
 
 1. Install the requirements
 
-   ```
-   $ pip install -r requirements.txt
+   ```bash
+   pip install -r requirements.txt
    ```
 
-2. Run the app
+2. Launch the app
 
-   ```
-   $ streamlit run streamlit_app.py
+   ```bash
+   streamlit run streamlit_app.py
    ```
